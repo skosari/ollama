@@ -10,8 +10,7 @@ import (
 )
 
 func TestPresencePenaltyUsesAppendedTokenImmediately(t *testing.T) {
-	// RepeatLastN = 1, PresencePenalty = 6
-	s := New(0, 0, 0, 0, 1, 6)
+	s := New(Options{RepeatLastN: 1, PresencePenalty: 6})
 	defer func() {
 		s.Free()
 		mlx.Sweep()
@@ -20,11 +19,11 @@ func TestPresencePenaltyUsesAppendedTokenImmediately(t *testing.T) {
 	s.ResetHistory([]int32{0})
 	s.AppendToken(mlx.NewArrayInt32([]int32{1}, []int32{1}))
 
-	logprobs := mlx.FromValues([]float32{0, 5, 4}, 3)
-	got := s.Sample(logprobs)
+	logits := mlx.FromValues([]float32{0, 5, 4}, 3)
+	got := s.Sample(logits).Token
 	mlx.Eval(got)
 
-	// logprobs will be [0, -1, 4] after the penalty
+	// logits will be [0, -1, 4] after the penalty
 	// and then (index) 2 after the greedy sampler
 	gotInt := got.Int()
 	if gotInt != 2 {
@@ -33,7 +32,7 @@ func TestPresencePenaltyUsesAppendedTokenImmediately(t *testing.T) {
 }
 
 func TestMinPMasksTokensBelowThreshold(t *testing.T) {
-	s := New(0, 0, 0.5, 0, 0, 0)
+	s := New(Options{MinP: 0.5})
 	defer func() {
 		s.Free()
 		mlx.Sweep()
